@@ -1,17 +1,21 @@
-name: Deploy and Update Score
+name: Deploy Site
 
 on:
-  schedule:
-    - cron: "0 20 * * *" # Runs at 2 AM IST (8 PM UTC)
   push:
     branches:
       - main
-    paths-ignore:
-      - "public/data/**" # Ignore changes to data files
-      - ".github/workflows/**" # Ignore workflow file changes
+    paths:
+      - "src/**"
+      - "app/**"
+      - "pages/**"
+      - "components/**"
+      - "styles/**"
+      - "package.json"
+      - "next.config.js"
+      - "tsconfig.json"
 
 jobs:
-  update-and-deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -31,26 +35,13 @@ jobs:
       - name: Restore Next.js build cache
         uses: actions/cache@v3
         with:
-          path: |
-            .next/cache
+          path: .next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
 
       - name: Install Dependencies
         run: npm install
-
-      - name: Update Score
-        run: npm run update-score
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-      - name: Commit and Push if changes exist
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add public/data/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update progress data [skip ci]" && git push)
 
       - name: Build
         run: npm run build
