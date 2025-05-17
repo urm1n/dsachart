@@ -1,103 +1,261 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+interface ProgressData {
+  currentScore: number;
+  highestScore: number;
+  lowestScore: number;
+  history: {
+    date: string;
+    score: number;
+    hadCommit: boolean;
+  }[];
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [data, setData] = useState<ProgressData | null>(null);
+  const [timeRange, setTimeRange] = useState<
+    "1W" | "1M" | "3M" | "6M" | "1Y" | "ALL"
+  >("1M");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    fetch("/data/progress.json")
+      .then((res) => res.json())
+      .then(setData)
+      .catch(console.error);
+  }, []);
+
+  if (!data)
+    return <div className="text-black dark:text-white">Loading...</div>;
+
+  const filterDataByTimeRange = () => {
+    const now = new Date();
+    const filteredHistory = data.history.filter((entry) => {
+      const entryDate = new Date(entry.date);
+      switch (timeRange) {
+        case "1W":
+          return now.getTime() - entryDate.getTime() <= 7 * 24 * 60 * 60 * 1000;
+        case "1M":
+          return (
+            now.getTime() - entryDate.getTime() <= 30 * 24 * 60 * 60 * 1000
+          );
+        case "3M":
+          return (
+            now.getTime() - entryDate.getTime() <= 90 * 24 * 60 * 60 * 1000
+          );
+        case "6M":
+          return (
+            now.getTime() - entryDate.getTime() <= 180 * 24 * 60 * 60 * 1000
+          );
+        case "1Y":
+          return (
+            now.getTime() - entryDate.getTime() <= 365 * 24 * 60 * 60 * 1000
+          );
+        default:
+          return true;
+      }
+    });
+    return filteredHistory;
+  };
+
+  const filteredData = filterDataByTimeRange();
+
+  const chartData = {
+    labels: filteredData.map((h) => new Date(h.date).toLocaleDateString()),
+    datasets: [
+      {
+        label: "Progress Score",
+        data: filteredData.map((h) => h.score),
+        borderColor: "rgb(59, 130, 246)",
+        backgroundColor: "rgb(59, 130, 246)",
+        pointBackgroundColor: filteredData.map((h) =>
+          h.hadCommit ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
+        ),
+        pointBorderColor: filteredData.map((h) =>
+          h.hadCommit ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
+        ),
+        pointRadius: 4,
+        tension: 0.1,
+      },
+    ],
+  };
+
+  const isDarkMode =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        grid: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+          borderColor: isDarkMode
+            ? "rgba(255, 255, 255, 0.1)"
+            : "rgba(0, 0, 0, 0.1)",
+          drawBorder: false,
+        },
+        ticks: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.8)",
+          callback: (value: number) => value.toFixed(4),
+        },
+      },
+      x: {
+        grid: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+          borderColor: isDarkMode
+            ? "rgba(255, 255, 255, 0.1)"
+            : "rgba(0, 0, 0, 0.1)",
+          drawBorder: false,
+        },
+        ticks: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.8)",
+          maxRotation: 45,
+          minRotation: 45,
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.8)",
+          font: {
+            size: 14,
+          },
+        },
+      },
+      tooltip: {
+        titleColor: "rgba(255, 255, 255, 0.9)",
+        bodyColor: "rgba(255, 255, 255, 0.9)",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        callbacks: {
+          label: (context: any) => {
+            const index = context.dataIndex;
+            const hadCommit = filteredData[index].hadCommit;
+            return `Score: ${context.raw.toFixed(4)} (${
+              hadCommit ? "Committed" : "No Commit"
+            })`;
+          },
+        },
+      },
+    },
+  };
+
+  return (
+    <div className="min-h-screen p-4 sm:p-8 bg-white dark:bg-gray-900 text-black dark:text-white">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4">
+        CSES Progress Tracker
+      </h1>
+
+      <div className="mb-4 flex gap-2 sm:gap-4 overflow-x-auto pb-2">
+        <button
+          onClick={() => setTimeRange("1W")}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+            timeRange === "1W"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+          }`}
+        >
+          1 Week
+        </button>
+        <button
+          onClick={() => setTimeRange("1M")}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+            timeRange === "1M"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+          }`}
+        >
+          1 Month
+        </button>
+        <button
+          onClick={() => setTimeRange("3M")}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+            timeRange === "3M"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+          }`}
+        >
+          3 Months
+        </button>
+        <button
+          onClick={() => setTimeRange("6M")}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+            timeRange === "6M"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+          }`}
+        >
+          6 Months
+        </button>
+        <button
+          onClick={() => setTimeRange("1Y")}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+            timeRange === "1Y"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+          }`}
+        >
+          1 Year
+        </button>
+        <button
+          onClick={() => setTimeRange("ALL")}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+            timeRange === "ALL"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+          }`}
+        >
+          All Time
+        </button>
+      </div>
+
+      <div
+        className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg mb-4"
+        style={{ height: "40vh", minHeight: "300px" }}
+      >
+        <Line data={chartData} options={chartOptions} />
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="border-r dark:border-gray-700">
+            <h2 className="text-sm font-semibold mb-1">Current Score</h2>
+            <p className="text-lg">{data.currentScore.toFixed(4)}</p>
+          </div>
+          <div className="border-r dark:border-gray-700">
+            <h2 className="text-sm font-semibold mb-1">Highest Score</h2>
+            <p className="text-lg">{data.highestScore.toFixed(4)}</p>
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold mb-1">Lowest Score</h2>
+            <p className="text-lg">{data.lowestScore.toFixed(4)}</p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }

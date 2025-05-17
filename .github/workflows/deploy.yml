@@ -1,0 +1,52 @@
+name: Deploy and Update Score
+
+on:
+  schedule:
+    - cron: "0 20 * * *" # Runs at 2 AM IST (8 PM UTC)
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "public/data/**" # Ignore changes to data files
+      - ".github/workflows/**" # Ignore workflow file changes
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Update Score
+        run: npm run update-score
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+      - name: Commit and Push if changes exist
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add public/data/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update progress data [skip ci]" && git push)
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
