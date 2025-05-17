@@ -4,8 +4,7 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  basePath: '/dsachart',
-  telemetry: false
+  basePath: '/dsachart'
 }
 
 export default nextConfig
