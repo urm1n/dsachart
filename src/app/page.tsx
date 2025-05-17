@@ -11,6 +11,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartOptions,
 } from "chart.js";
 
 ChartJS.register(
@@ -23,22 +24,24 @@ ChartJS.register(
   Legend
 );
 
+interface HistoryEntry {
+  date: string;
+  score: number;
+  hadCommit: boolean;
+}
+
 interface ProgressData {
   currentScore: number;
   highestScore: number;
   lowestScore: number;
-  history: {
-    date: string;
-    score: number;
-    hadCommit: boolean;
-  }[];
+  history: HistoryEntry[];
 }
+
+type TimeRange = "1W" | "1M" | "3M" | "6M" | "1Y" | "ALL";
 
 export default function Home() {
   const [data, setData] = useState<ProgressData | null>(null);
-  const [timeRange, setTimeRange] = useState<
-    "1W" | "1M" | "3M" | "6M" | "1Y" | "ALL"
-  >("1M");
+  const [timeRange, setTimeRange] = useState<TimeRange>("1M");
 
   useEffect(() => {
     fetch("/data/progress.json")
@@ -50,37 +53,26 @@ export default function Home() {
   if (!data)
     return <div className="text-black dark:text-white">Loading...</div>;
 
-  const filterDataByTimeRange = () => {
-    const now = new Date();
-    const filteredHistory = data.history.filter((entry) => {
-      const entryDate = new Date(entry.date);
-      switch (timeRange) {
-        case "1W":
-          return now.getTime() - entryDate.getTime() <= 7 * 24 * 60 * 60 * 1000;
-        case "1M":
-          return (
-            now.getTime() - entryDate.getTime() <= 30 * 24 * 60 * 60 * 1000
-          );
-        case "3M":
-          return (
-            now.getTime() - entryDate.getTime() <= 90 * 24 * 60 * 60 * 1000
-          );
-        case "6M":
-          return (
-            now.getTime() - entryDate.getTime() <= 180 * 24 * 60 * 60 * 1000
-          );
-        case "1Y":
-          return (
-            now.getTime() - entryDate.getTime() <= 365 * 24 * 60 * 60 * 1000
-          );
-        default:
-          return true;
-      }
-    });
-    return filteredHistory;
-  };
+  const now = new Date();
+  const filteredData = data.history.filter((entry) => {
+    const entryDate = new Date(entry.date);
+    const msInDay = 24 * 60 * 60 * 1000;
 
-  const filteredData = filterDataByTimeRange();
+    switch (timeRange) {
+      case "1W":
+        return now.getTime() - entryDate.getTime() <= 7 * msInDay;
+      case "1M":
+        return now.getTime() - entryDate.getTime() <= 30 * msInDay;
+      case "3M":
+        return now.getTime() - entryDate.getTime() <= 90 * msInDay;
+      case "6M":
+        return now.getTime() - entryDate.getTime() <= 180 * msInDay;
+      case "1Y":
+        return now.getTime() - entryDate.getTime() <= 365 * msInDay;
+      case "ALL":
+        return true;
+    }
+  });
 
   const chartData = {
     labels: filteredData.map((h) => new Date(h.date).toLocaleDateString()),
@@ -106,30 +98,22 @@ export default function Home() {
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
       y: {
         grid: {
           color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
-          borderColor: isDarkMode
-            ? "rgba(255, 255, 255, 0.1)"
-            : "rgba(0, 0, 0, 0.1)",
-          drawBorder: false,
         },
         ticks: {
           color: isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.8)",
-          callback: (value: number) => value.toFixed(4),
+          callback: (value) => Number(value).toFixed(4),
         },
       },
       x: {
         grid: {
           color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
-          borderColor: isDarkMode
-            ? "rgba(255, 255, 255, 0.1)"
-            : "rgba(0, 0, 0, 0.1)",
-          drawBorder: false,
         },
         ticks: {
           color: isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.8)",
@@ -142,26 +126,34 @@ export default function Home() {
       legend: {
         labels: {
           color: isDarkMode ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.8)",
-          font: {
-            size: 14,
-          },
+          font: { size: 14 },
         },
       },
       tooltip: {
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
         titleColor: "rgba(255, 255, 255, 0.9)",
         bodyColor: "rgba(255, 255, 255, 0.9)",
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
         callbacks: {
-          label: (context: any) => {
+          label: (context) => {
             const index = context.dataIndex;
-            const hadCommit = filteredData[index].hadCommit;
-            return `Score: ${context.raw.toFixed(4)} (${
+            const hadCommit = filteredData[index]?.hadCommit ?? false;
+            return `Score: ${Number(context.raw).toFixed(4)} (${
               hadCommit ? "Committed" : "No Commit"
             })`;
           },
         },
       },
     },
+  };
+
+  const ranges: TimeRange[] = ["1W", "1M", "3M", "6M", "1Y", "ALL"];
+  const rangeLabels: Record<TimeRange, string> = {
+    "1W": "1 Week",
+    "1M": "1 Month",
+    "3M": "3 Months",
+    "6M": "6 Months",
+    "1Y": "1 Year",
+    ALL: "All Time",
   };
 
   return (
@@ -171,66 +163,19 @@ export default function Home() {
       </h1>
 
       <div className="mb-4 flex gap-2 sm:gap-4 overflow-x-auto pb-2">
-        <button
-          onClick={() => setTimeRange("1W")}
-          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
-            timeRange === "1W"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-          }`}
-        >
-          1 Week
-        </button>
-        <button
-          onClick={() => setTimeRange("1M")}
-          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
-            timeRange === "1M"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-          }`}
-        >
-          1 Month
-        </button>
-        <button
-          onClick={() => setTimeRange("3M")}
-          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
-            timeRange === "3M"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-          }`}
-        >
-          3 Months
-        </button>
-        <button
-          onClick={() => setTimeRange("6M")}
-          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
-            timeRange === "6M"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-          }`}
-        >
-          6 Months
-        </button>
-        <button
-          onClick={() => setTimeRange("1Y")}
-          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
-            timeRange === "1Y"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-          }`}
-        >
-          1 Year
-        </button>
-        <button
-          onClick={() => setTimeRange("ALL")}
-          className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
-            timeRange === "ALL"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-          }`}
-        >
-          All Time
-        </button>
+        {ranges.map((range) => (
+          <button
+            key={range}
+            onClick={() => setTimeRange(range)}
+            className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+              timeRange === range
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            }`}
+          >
+            {rangeLabels[range]}
+          </button>
+        ))}
       </div>
 
       <div
