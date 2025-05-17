@@ -4,7 +4,7 @@ const nextConfig = {
     images: {
       unoptimized: true,
     },
-    basePath: '/dsachart',
+    // basePath: '/dsachart',
     eslint: {
       ignoreDuringBuilds: true,
     },
