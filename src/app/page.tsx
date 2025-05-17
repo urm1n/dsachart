@@ -44,7 +44,7 @@ export default function Home() {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M");
 
   useEffect(() => {
-    fetch("/data/progress.json")
+    fetch("https://urm1n.github.io/dsachart/data/progress.json")
       .then((res) => res.json())
       .then(setData)
       .catch(console.error);
