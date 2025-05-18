@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -42,6 +42,44 @@ type TimeRange = "1W" | "1M" | "3M" | "6M" | "1Y" | "ALL";
 export default function Home() {
   const [data, setData] = useState<ProgressData | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>("1M");
+  const [quote, setQuote] = useState(
+    "Thinking you're no-good and worthless is the worst thing you can do"
+  );
+  const [author, setAuthor] = useState("Nobito");
+
+  useEffect(() => {
+    // Check if we have a stored quote and it's from today
+    const storedQuote = localStorage.getItem("dailyQuote");
+    const storedDate = localStorage.getItem("quoteDate");
+    const today = new Date().toDateString();
+
+    if (storedQuote && storedDate === today) {
+      // Use stored quote if it's from today
+      const { content, author } = JSON.parse(storedQuote);
+      setQuote(content);
+      setAuthor(author);
+    } else {
+      // Fetch new quote if no stored quote or it's old
+      fetch("https://quotes-api-self.vercel.app/quote")
+        .then((res) => res.json())
+        .then((data) => {
+          setQuote(data.quote);
+          setAuthor(data.author);
+          // Store the new quote and date
+          localStorage.setItem(
+            "dailyQuote",
+            JSON.stringify({
+              content: data.quote,
+              author: data.author,
+            })
+          );
+          localStorage.setItem("quoteDate", today);
+        })
+        .catch(() => {
+          // Fallback quote is already set in useState
+        });
+    }
+  }, []);
 
   useEffect(() => {
     fetch("https://urm1n.github.io/dsachart/data/progress.json")
@@ -156,18 +194,58 @@ export default function Home() {
     ALL: "All Time",
   };
 
-  return (
-    <div className="min-h-screen p-4 sm:p-8 bg-white dark:bg-gray-900 text-black dark:text-white">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4">
-        CSES Progress Tracker
-      </h1>
+  // Add this function to calculate score change
+  const calculateScoreChange = () => {
+    if (filteredData.length < 2) return null;
+    const firstScore = filteredData[0].score;
+    const lastScore = filteredData[filteredData.length - 1].score;
+    const change = ((lastScore - firstScore) / firstScore) * 100;
+    return {
+      value: change,
+      isPositive: change >= 0,
+    };
+  };
 
-      <div className="mb-4 flex gap-2 sm:gap-4 overflow-x-auto pb-2">
+  const scoreChange = calculateScoreChange();
+
+  return (
+    <div className="min-h-screen p-4 sm:p-8 bg-white dark:bg-gray-900 text-black dark:text-white font-['Inter']">
+      <div className="flex items-baseline justify-between mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 font-['JetBrains Mono']">
+            Current Score
+          </p>
+          <div className="flex items-baseline gap-3">
+            <p className="font-['JetBrains Mono'] text-5xl font-bold text-gray-900 dark:text-white">
+              {data.currentScore.toFixed(4)}
+            </p>
+            {scoreChange && (
+              <div
+                className={`flex items-center ${
+                  scoreChange.isPositive
+                    ? "text-emerald-500 dark:text-emerald-400"
+                    : "text-rose-500 dark:text-rose-400"
+                }`}
+              >
+                <span className="font-['JetBrains Mono'] text-2xl font-medium">
+                  {scoreChange.isPositive ? "+" : ""}
+                  {scoreChange.value.toFixed(2)}%
+                </span>
+              </div>
+            )}
+          </div>
+          <p className="mt-4 text-sm italic text-gray-600 dark:text-gray-400 font-light">
+            {quote} <span className="text-xs">- {author}</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-4 flex gap-2 sm:gap-4 overflow-x-auto pb-2 scrollbar-hide">
         {ranges.map((range) => (
           <button
             key={range}
             onClick={() => setTimeRange(range)}
-            className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap ${
+            className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap font-medium ${
               timeRange === range
                 ? "bg-blue-500 text-white"
                 : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
@@ -185,19 +263,26 @@ export default function Home() {
         <Line data={chartData} options={chartOptions} />
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="border-r dark:border-gray-700">
-            <h2 className="text-sm font-semibold mb-1">Current Score</h2>
-            <p className="text-lg">{data.currentScore.toFixed(4)}</p>
-          </div>
-          <div className="border-r dark:border-gray-700">
-            <h2 className="text-sm font-semibold mb-1">Highest Score</h2>
-            <p className="text-lg">{data.highestScore.toFixed(4)}</p>
-          </div>
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="flex items-center justify-between p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
           <div>
-            <h2 className="text-sm font-semibold mb-1">Lowest Score</h2>
-            <p className="text-lg">{data.lowestScore.toFixed(4)}</p>
+            <p className="text-rose-600 dark:text-rose-400 font-medium uppercase tracking-wider text-xs font-['JetBrains Mono']">
+              Lowest Point
+            </p>
+            <p className="font-['JetBrains Mono'] text-lg font-bold text-rose-700 dark:text-rose-300">
+              {data.lowestScore.toFixed(4)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+          <div>
+            <p className="text-emerald-600 dark:text-emerald-400 font-medium uppercase tracking-wider text-xs font-['JetBrains Mono']">
+              Highest Point
+            </p>
+            <p className="font-['JetBrains Mono'] text-lg font-bold text-emerald-700 dark:text-emerald-300">
+              {data.highestScore.toFixed(4)}
+            </p>
           </div>
         </div>
       </div>
