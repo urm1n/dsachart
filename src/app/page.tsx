@@ -39,8 +39,32 @@ interface ProgressData {
 
 type TimeRange = "1W" | "1M" | "3M" | "6M" | "1Y" | "ALL";
 
+interface HabitScore {
+  score: number;
+  value: number | boolean;
+  target?: number;
+  achieved: boolean;
+}
+
+interface DailyScores {
+  [key: string]: HabitScore;
+}
+
+interface HabitHistory {
+  date: string;
+  scores: DailyScores;
+}
+
+interface HabitData {
+  currentScores: { [key: string]: number };
+  highestScores: { [key: string]: number };
+  lowestScores: { [key: string]: number };
+  history: HabitHistory[];
+}
+
 export default function Home() {
   const [data, setData] = useState<ProgressData | null>(null);
+  const [habitData, setHabitData] = useState<HabitData | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>("1M");
   const [quote, setQuote] = useState(
     "Thinking you're no-good and worthless is the worst thing you can do"
@@ -85,6 +109,13 @@ export default function Home() {
     fetch("https://urm1n.github.io/dsachart/data/progress.json")
       .then((res) => res.json())
       .then(setData)
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetch("https://urm1n.github.io/dsachart/data/habits.json")
+      .then((res) => res.json())
+      .then(setHabitData)
       .catch(console.error);
   }, []);
 
@@ -210,60 +241,147 @@ export default function Home() {
 
   return (
     <div className="min-h-screen p-4 sm:p-8 bg-white dark:bg-gray-900 text-black dark:text-white font-['Inter']">
-      <div className="flex items-baseline justify-between mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Progress Score Section */}
         <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 font-['JetBrains Mono']">
-            Current Score
-          </p>
-          <div className="flex items-baseline gap-3">
-            <p className="font-['JetBrains Mono'] text-5xl font-bold text-gray-900 dark:text-white">
-              {data.currentScore.toFixed(4)}
-            </p>
-            {scoreChange && (
-              <div
-                className={`flex items-center ${
-                  scoreChange.isPositive
-                    ? "text-emerald-500 dark:text-emerald-400"
-                    : "text-rose-500 dark:text-rose-400"
+          <div className="flex items-baseline justify-between mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 font-['JetBrains Mono']">
+                Progress Score
+              </p>
+              <div className="flex items-baseline gap-3">
+                <p className="font-['JetBrains Mono'] text-5xl font-bold text-gray-900 dark:text-white">
+                  {data?.currentScore.toFixed(4)}
+                </p>
+                {scoreChange && (
+                  <div
+                    className={`flex items-center ${
+                      scoreChange.isPositive
+                        ? "text-emerald-500 dark:text-emerald-400"
+                        : "text-rose-500 dark:text-rose-400"
+                    }`}
+                  >
+                    <span className="font-['JetBrains Mono'] text-2xl font-medium">
+                      {scoreChange.isPositive ? "+" : ""}
+                      {scoreChange.value.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+              <p className="mt-4 text-sm italic text-gray-600 dark:text-gray-400 font-light">
+                {quote} <span className="text-xs">- {author}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Time Range Buttons */}
+          <div className="mb-4 flex gap-2 sm:gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            {ranges.map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap font-medium ${
+                  timeRange === range
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
                 }`}
               >
-                <span className="font-['JetBrains Mono'] text-2xl font-medium">
-                  {scoreChange.isPositive ? "+" : ""}
-                  {scoreChange.value.toFixed(2)}%
-                </span>
-              </div>
-            )}
+                {rangeLabels[range]}
+              </button>
+            ))}
           </div>
-          <p className="mt-4 text-sm italic text-gray-600 dark:text-gray-400 font-light">
-            {quote} <span className="text-xs">- {author}</span>
-          </p>
+
+          {/* Progress Chart */}
+          <div
+            className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg mb-4"
+            style={{ height: "40vh", minHeight: "300px" }}
+          >
+            <Line data={chartData} options={chartOptions} />
+          </div>
+        </div>
+
+        {/* Habits Section */}
+        <div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-6">Habits Tracking</h2>
+            <div className="space-y-6">
+              {habitData &&
+                Object.entries(habitData.currentScores).map(
+                  ([habit, score]) => (
+                    <div
+                      key={habit}
+                      className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4"
+                    >
+                      <div className="flex justify-between items-baseline mb-2">
+                        <h3 className="text-lg font-semibold capitalize">
+                          {habit.replace(/([A-Z])/g, " $1").trim()}
+                        </h3>
+                        <span className="font-['JetBrains Mono'] text-lg font-bold">
+                          {score.toFixed(4)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div className="text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Highest:{" "}
+                          </span>
+                          <span className="font-['JetBrains Mono'] text-emerald-600 dark:text-emerald-400">
+                            {habitData.highestScores[habit].toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Lowest:{" "}
+                          </span>
+                          <span className="font-['JetBrains Mono'] text-rose-600 dark:text-rose-400">
+                            {habitData.lowestScores[habit].toFixed(4)}
+                          </span>
+                        </div>
+                      </div>
+                      {habitData.history[habitData.history.length - 1]?.scores[
+                        habit
+                      ] && (
+                        <div className="mt-2 text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Last Entry:{" "}
+                          </span>
+                          <span
+                            className={`font-['JetBrains Mono'] ${
+                              habitData.history[habitData.history.length - 1]
+                                .scores[habit].achieved
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-rose-600 dark:text-rose-400"
+                            }`}
+                          >
+                            {typeof habitData.history[
+                              habitData.history.length - 1
+                            ].scores[habit].value === "boolean"
+                              ? habitData.history[habitData.history.length - 1]
+                                  .scores[habit].value
+                                ? "Completed"
+                                : "Not Completed"
+                              : `${
+                                  habitData.history[
+                                    habitData.history.length - 1
+                                  ].scores[habit].value
+                                }/${
+                                  habitData.history[
+                                    habitData.history.length - 1
+                                  ].scores[habit].target
+                                }`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="mb-4 flex gap-2 sm:gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        {ranges.map((range) => (
-          <button
-            key={range}
-            onClick={() => setTimeRange(range)}
-            className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-sm sm:text-base whitespace-nowrap font-medium ${
-              timeRange === range
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-            }`}
-          >
-            {rangeLabels[range]}
-          </button>
-        ))}
-      </div>
-
-      <div
-        className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg mb-4"
-        style={{ height: "40vh", minHeight: "300px" }}
-      >
-        <Line data={chartData} options={chartOptions} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      {/* Score Stats */}
+      <div className="grid grid-cols-2 gap-4 text-sm mt-6">
         <div className="flex items-center justify-between p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
           <div>
             <p className="text-rose-600 dark:text-rose-400 font-medium uppercase tracking-wider text-xs font-['JetBrains Mono']">
