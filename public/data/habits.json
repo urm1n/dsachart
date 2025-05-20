@@ -1,0 +1,63 @@
+{
+  "currentScores": {
+    "pushups": 1.0201,
+    "morningWalk": 0.9801,
+    "reading": 0.9801
+  },
+  "highestScores": {
+    "pushups": 1.0201,
+    "morningWalk": 1,
+    "reading": 1
+  },
+  "lowestScores": {
+    "pushups": 1,
+    "morningWalk": 0.9801,
+    "reading": 0.9801
+  },
+  "history": [
+    {
+      "date": "19/05/2025",
+      "scores": {
+        "pushups": {
+          "score": 1.01,
+          "value": 15,
+          "target": 15,
+          "achieved": true
+        },
+        "morningWalk": {
+          "score": 0.99,
+          "value": false,
+          "achieved": false
+        },
+        "reading": {
+          "score": 0.99,
+          "value": 0,
+          "target": 20,
+          "achieved": false
+        }
+      }
+    },
+    {
+      "date": "20/05/2025",
+      "scores": {
+        "pushups": {
+          "score": 1.0201,
+          "value": 16,
+          "target": 15,
+          "achieved": true
+        },
+        "morningWalk": {
+          "score": 0.9801,
+          "value": false,
+          "achieved": false
+        },
+        "reading": {
+          "score": 0.9801,
+          "value": 0,
+          "target": 20,
+          "achieved": false
+        }
+      }
+    }
+  ]
+}

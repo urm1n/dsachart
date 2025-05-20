@@ -8,11 +8,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-score": "tsx scripts/update-score.ts"
+    "update-score": "tsx scripts/update-score.ts",
+    "update-habits": "tsx scripts/update-habits.ts"
   },
   "dependencies": {
     "chart.js": "^4.4.0",
     "dotenv": "^16.5.0",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^148.0.0",
     "next": "15.3.2",
     "octokit": "^3.1.1",
     "react": "^19.0.0",

@@ -3,6 +3,13 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import { 
+  INITIAL_SCORE, 
+  MULTIPLIER_SUCCESS, 
+  MULTIPLIER_FAILURE,
+  START_DATE,
+  IST_OFFSET 
+} from "../src/constants/scores.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
