@@ -3,12 +3,12 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-import { 
-  INITIAL_SCORE, 
-  MULTIPLIER_SUCCESS, 
+import {
+  INITIAL_SCORE,
+  MULTIPLIER_SUCCESS,
   MULTIPLIER_FAILURE,
   START_DATE,
-  IST_OFFSET 
+  IST_OFFSET,
 } from "../src/constants/scores.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,11 +31,12 @@ const octokit = new Octokit({
   auth: process.env.PAT_TOKEN,
 });
 
-const INITIAL_SCORE = 1.0;
-const MULTIPLIER_SUCCESS = 1.01;
-const MULTIPLIER_FAILURE = 0.99;
-const START_DATE = new Date("2025-05-15");
-const IST_OFFSET = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+// Remove these duplicate constant declarations since they're imported above
+// const INITIAL_SCORE = 1.0;
+// const MULTIPLIER_SUCCESS = 1.01;
+// const MULTIPLIER_FAILURE = 0.99;
+// const START_DATE = new Date("2025-05-15");
+// const IST_OFFSET = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
 
 async function checkCommits(date: Date): Promise<boolean> {
   // Convert to IST
