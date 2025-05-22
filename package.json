@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "update-score": "tsx scripts/update-score.ts",
-    "update-habits": "tsx scripts/update-habits.ts"
+    "update-habits": "tsx scripts/update-habits.ts",
+    "getData": "npm run update-score && npm run update-habits"
   },
   "dependencies": {
     "chart.js": "^4.4.0",
