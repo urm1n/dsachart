@@ -1,18 +1,21 @@
 {
   "currentScores": {
-    "pushups": 1.0199979899999998,
+    "pushups": 1.04060401,
     "morningWalk": 0.96059601,
-    "reading": 0.96059601
+    "reading": 0.96059601,
+    "meditate": 1.01999799
   },
   "highestScores": {
-    "pushups": 1.030301,
+    "pushups": 1.04060401,
     "morningWalk": 1,
-    "reading": 1
+    "reading": 1,
+    "meditate": 1.0201
   },
   "lowestScores": {
     "pushups": 1,
     "morningWalk": 0.96059601,
-    "reading": 0.96059601
+    "reading": 0.96059601,
+    "meditate": 1
   },
   "history": [
     {
@@ -32,8 +35,12 @@
         "reading": {
           "score": 0.99,
           "value": 0,
-          "target": 20,
-          "achieved": false
+          "achieved": true
+        },
+        "meditate": {
+          "score": 1.01,
+          "value": true,
+          "achieved": true
         }
       }
     },
@@ -54,8 +61,12 @@
         "reading": {
           "score": 0.9801,
           "value": 0,
-          "target": 20,
-          "achieved": false
+          "achieved": true
+        },
+        "meditate": {
+          "score": 1.0201,
+          "value": true,
+          "achieved": true
         }
       }
     },
@@ -76,7 +87,11 @@
         "reading": {
           "score": 0.9702989999999999,
           "value": 0,
-          "target": 20,
+          "achieved": true
+        },
+        "meditate": {
+          "score": 1.009899,
+          "value": false,
           "achieved": false
         }
       }
@@ -85,10 +100,10 @@
       "date": "22/05/2025",
       "scores": {
         "pushups": {
-          "score": 1.0199979899999998,
-          "value": 0,
+          "score": 1.04060401,
+          "value": 15,
           "target": 15,
-          "achieved": false
+          "achieved": true
         },
         "morningWalk": {
           "score": 0.96059601,
@@ -98,8 +113,12 @@
         "reading": {
           "score": 0.96059601,
           "value": 0,
-          "target": 20,
-          "achieved": false
+          "achieved": true
+        },
+        "meditate": {
+          "score": 1.01999799,
+          "value": true,
+          "achieved": true
         }
       }
     }
