@@ -2,7 +2,7 @@ name: Update Score Data Only
 
 on:
   schedule:
-    - cron: "0 20 * * *" # 2 AM IST
+    - cron: "15 18 * * *" # 11:45 PM IST
   workflow_dispatch:
 
 jobs:

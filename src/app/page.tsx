@@ -82,7 +82,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch("https://urm1n.github.io/dsachart/data/progress.json")
+    fetch(
+      "https://raw.githubusercontent.com/urm1n/dsachart/main/public/data/progress.json"
+    )
       .then((res) => res.json())
       .then(setData)
       .catch(console.error);
