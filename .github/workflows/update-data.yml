@@ -11,6 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -29,5 +31,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/urm1n/dsachart.git
           git add public/data/
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update progress data [skip ci]" && git push)
