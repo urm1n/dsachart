@@ -1,5 +1,5 @@
 {
-  "currentScore": 1.0697791293147336,
+  "currentScore": 1.0590813380215862,
   "highestScore": 1.2951267893359097,
   "lowestScore": 0.9999,
   "history": [
@@ -256,6 +256,11 @@
     {
       "date": "2025-07-04T00:00:00.000Z",
       "score": 1.0697791293147336,
+      "hadCommit": false
+    },
+    {
+      "date": "2025-07-05T00:00:00.000Z",
+      "score": 1.0590813380215862,
       "hadCommit": false
     }
   ]
